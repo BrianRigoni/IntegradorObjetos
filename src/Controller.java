@@ -16,11 +16,17 @@ public class Controller {
 	//Datos que se crean cuando inicia el programa para demostracion
 	public void fakeData() {
 		/* Usuarios */
-		users.add(new User("Ignacio", "Perez", "iperez@algo.com", "iperez", "123456").setDeveloper(true));
 		users.add(new User("Rigoni", "Brian", "brigoni@algo.com", "brigoni", "123456").setAdmin(true).setDeveloper(true));
+		users.add(new User("Ignacio", "Perez", "iperez@algo.com", "iperez", "123456").setDeveloper(true));
+		users.add(new User("Ricardo", "Mansilla", "rmansilla@algo.com", "rmansilla", "123456"));
 		users.add(new User("Nombre1", "Apellido1", "usuario1@algo.com", "usuario1", "123456"));
+		
 		/* Proyectos  */
-		Project project = new Project("Olivia").setDefaultUserInCharge(users.get(0));
+		Project project = new Project("Olivia").setDefaultUserInCharge(users.get(1));
+		
+		project.addTeamMember(users.get(0));
+		project.addTeamMember(users.get(1));
+		project.setLeader(users.get(0));
 		for (int i = 0; i <= 1; i++) {
 			User u = users.get(i);
 			project.addTeamMember(u);
@@ -29,10 +35,10 @@ public class Controller {
 		// tipos de item
 		ItemType itemType = new ItemType("Reporte de bug");
 
-		State st1 = new State(1,"Creado");
-		State st2 = new State(2,"Desarrollo");
-		State st3 = new State(3,"Validacion");
-		State st4 = new State(4,"Terminado");
+		State st1 = new State("Creado");
+		State st2 = new State("Desarrollo");
+		State st3 = new State("Validacion");
+		State st4 = new State("Terminado");
 		
 		st1.addTransition(st2);
 		st2.addTransition(st3);
@@ -48,13 +54,13 @@ public class Controller {
 		
 		ItemType itemType2 = new ItemType("Mejora");
 		
-		State st21 = new State(1, "En revision");
-		State st22 = new State(2, "Aceptado");
-		State st23 = new State(3, "Rechazada"); // Estado final cuando se rechazo
-		State st24 = new State(4, "En analisis");
-		State st25 = new State(5, "En desarrollo");
-		State st26 = new State(6, "En pruebas");
-		State st27 = new State(7, "Implementado."); // Estado final cuando se acepto
+		State st21 = new State("En revision");
+		State st22 = new State("Aceptado");
+		State st23 = new State("Rechazada"); // Estado final cuando se rechazo
+		State st24 = new State("En analisis");
+		State st25 = new State("En desarrollo");
+		State st26 = new State("En pruebas");
+		State st27 = new State("Implementado."); // Estado final cuando se acepto
 
 		
 		st21.addTransition(st22);
@@ -73,13 +79,13 @@ public class Controller {
 		itemType2.addState(st26);
 		itemType2.addState(st27);
 		
-		project.addItem(new Item("Mejora de interfaz"));
 		project.addItemType(itemType2);
-
+		Item item = new Item("Mejora de interfaz");
+		item.setItemType(itemType2);
+		project.addItem(item);
 	
 		projects.add(project);
-		
-		
+	
 	}
 	
 	
@@ -88,7 +94,6 @@ public class Controller {
 	public ArrayList<User>		getUsers()		{ 
 		ArrayList<User> usersList = new ArrayList<User>();
 		for(User u : users) {
-			u.setPassword(null);
 			usersList.add(u);
 		}
 		return usersList;
@@ -99,7 +104,6 @@ public class Controller {
 	public User login(String username, String password) {
 		for(User u : users) {
 			if (u.authenticate(username, password)) {
-				u.setPassword(null); // Para que el usuario que se retorna a la interfaz tenga la password en null post-autentificacion
 				return u;
 			}
 		}

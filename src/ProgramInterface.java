@@ -23,6 +23,8 @@ import javax.swing.JTabbedPane;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Date;
+
 import javax.swing.border.LineBorder;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
@@ -31,10 +33,16 @@ import java.awt.event.MouseEvent;
 
 import java.awt.SystemColor;
 import java.awt.event.MouseMotionAdapter;
+import java.lang.reflect.Array;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.border.MatteBorder;
 import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
+import javax.swing.JScrollPane;
 
 
 public class ProgramInterface extends JFrame {
@@ -60,7 +68,7 @@ public class ProgramInterface extends JFrame {
 	private JList<Item>			jlist_items;
 	private JList<User>			jlist_teamMembers;
 	private JComboBox<User>		jcbx_users;
-	private JList<State>		jlist_history;
+	private JList<String>		jlist_history;
 	private JList<User> 		jlist_allUsers;
 	private JCheckBox 			chckbxDeveloper;
 	private JCheckBox 			chckbxAdmin;
@@ -69,23 +77,26 @@ public class ProgramInterface extends JFrame {
 	private JCheckBox			chckbxDefaultInCharge;
 	private JComboBox<ItemType> jcbx_itemType;
 	private JComboBox<Project>  jcbx_project;
-	private JTextField tf_name;
-	private JTextField tf_surname;
-	private JTextField tf_item;
-	private JTextField tf_profileUsername;
-	private JTextField tf_profileEmail;
-	private JPasswordField pf_profilePasswordField;
-	private JButton btn_changeUsername;
-	private JButton btn_changeEmail;
-	private JButton btn_changePassword;
-	
+	private JTextField 			tf_name;
+	private JTextField 			tf_surname;
+	private JTextField			tf_item;
+	private JTextField 			tf_profileUsername;
+	private JTextField 			tf_profileEmail;
+	private JPasswordField 		pf_profilePasswordField;
+	private JButton 			btn_changeUsername;
+	private JButton 			btn_changeEmail;
+	private JButton 			btn_changePassword;
+	private JButton				btn_userInCharge;
+	private JButton 			btn_deleteItem;
+	private JButton 			btn_stateChange;
 	
 	/*Variables que comparten los distintos paneles*/
 	private Controller 		controller;
 	private User 			currentUser;
 	private Project			currentProject;
+	private Item			selectedItem;
 	/* los string son constantes que establecen las rutas de los paneles del card layout agregados al contentPane*/	
-	final String HOME = 	"home";
+	final String HOME 	 = 	"home";
 	final String SIGNIN  = 	"sign_in";
 	final String SIGNUP  = 	"sign_up";
 	final String PROJECT = 	"project";
@@ -117,11 +128,11 @@ public class ProgramInterface extends JFrame {
 	 */
 	public ProgramInterface() {
 		setResizable(false);
-		// Instancio el controlador
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		// Instancio el controlador y el usuario
 		currentUser = new User();
 		controller = new Controller();
 		this.setTitle("BugTracker");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 614, 461);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -506,6 +517,8 @@ public class ProgramInterface extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (controller.updateUsername(currentUser, tf_profileUsername.getText())) {
+					btn_changeUsername.setEnabled(false);
+					tf_profileUsername.setText("");
 					JOptionPane.showMessageDialog(null, "Nombre de usuario actualizado.");
 					lblLogeadoComo.setText("Logeado como: "+ currentUser.getUsername());
 				}
@@ -523,6 +536,8 @@ public class ProgramInterface extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if(controller.updateUserEmail(currentUser, tf_profileEmail.getText())) {
+					btn_changeEmail.setEnabled(false);
+					tf_profileEmail.setText("");
 					JOptionPane.showMessageDialog(null, "Email actualizado.");
 				}
 				else {
@@ -539,6 +554,8 @@ public class ProgramInterface extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if(controller.updateUserPassword(currentUser, pf_profilePasswordField.getText())) {
+					pf_profilePasswordField.setText("");
+					btn_changePassword.setEnabled(false);
 					JOptionPane.showMessageDialog(null, "Password actualizada.");
 				}
 				else {
@@ -796,12 +813,12 @@ public class ProgramInterface extends JFrame {
 		contentPane.add(panel_project, PROJECT);
 		panel_project.setLayout(null);
 		
-		JTabbedPane tabbedPane = new JTabbedPane(SwingConstants.TOP);
-		tabbedPane.setBounds(0, 30, 588, 392);
-		panel_project.add(tabbedPane);
+		JTabbedPane tabbedPane_project = new JTabbedPane(SwingConstants.TOP);
+		tabbedPane_project.setBounds(0, 30, 588, 392);
+		panel_project.add(tabbedPane_project);
 		
 		JPanel panel_Team = new JPanel();
-		tabbedPane.addTab("Equipo", null, panel_Team, null);
+		tabbedPane_project.addTab("Equipo", null, panel_Team, null);
 		panel_Team.setLayout(null);
 		
 		JLabel lblMiembros = new JLabel("Miembros del equipo");
@@ -864,7 +881,7 @@ public class ProgramInterface extends JFrame {
 		panel_Team.add(chckbxDefaultInCharge);
 		
 		JPanel panel_itemTypes = new JPanel();
-		tabbedPane.addTab("Tipo de Item", null, panel_itemTypes, null);
+		tabbedPane_project.addTab("Tipo de Item", null, panel_itemTypes, null);
 		panel_itemTypes.setLayout(null);
 		
 		jlist_itemTypes = new JList<ItemType>();
@@ -880,14 +897,30 @@ public class ProgramInterface extends JFrame {
 		panel_itemTypes.add(btn_deleteIItemType);
 		
 		JPanel panel_items = new JPanel();
-		tabbedPane.addTab("Items", null, panel_items, null);
+		tabbedPane_project.addTab("Items", null, panel_items, null);
 		
 		jlist_items = new JList<Item>();
 		jlist_items.setBounds(10, 42, 157, 312);
 		jlist_items.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
+				selectedItem = jlist_items.getSelectedValue();
+				ArrayList<StateSequence> hist = selectedItem.getHistory();
+				// Se clickeo un item, se verifica si quien clickeo puede cambiar el estado, por eso
+				// me paro en la ultima posicion del vector, para ver si el ultimo responsable, es el usuario actual 
+				if ((currentUser.equals(hist.get(hist.size() - 1).getEmpInCharge() ) ) ||
+				     currentUser.equals(currentProject.getLeader()) 
+				   )  
+				{
+					btn_stateChange.setEnabled(true);
+				}
+				if(currentUser.equals(currentProject.getLeader())) {
+					btn_userInCharge.setEnabled(true);
+					btn_deleteItem.setEnabled(true);
+				}
 				// Cargar el historial del item seleccionado
+				loadHistory(hist);
+				
 			}
 		});
 		panel_items.setLayout(null);
@@ -896,8 +929,26 @@ public class ProgramInterface extends JFrame {
 		jlist_items.setBorder(new LineBorder(new Color(0, 0, 0)));
 		panel_items.add(jlist_items);
 		
-		JButton btn_deleteItem = new JButton("Eliminar");
-		btn_deleteItem.setBounds(237, 227, 101, 30);
+		btn_deleteItem = new JButton("Eliminar");
+		btn_deleteItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if(jlist_items.getSelectedValue() != null) {
+					if(currentProject.removeItem(jlist_items.getSelectedValue())) {
+						loadItems();
+						JOptionPane.showMessageDialog(null, "Item eliminado.");
+
+					}
+					else {
+						JOptionPane.showMessageDialog(null, "Error al eliminar item.");
+					}
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "No seleccionó ningún item.");
+				}
+			}
+		});
+		btn_deleteItem.setEnabled(false);
+		btn_deleteItem.setBounds(231, 223, 101, 30);
 		btn_deleteItem.setToolTipText("Eliminar item del proyecto");
 		btn_deleteItem.setFont(new Font("Verdana", Font.PLAIN, 11));
 		panel_items.add(btn_deleteItem);
@@ -908,29 +959,92 @@ public class ProgramInterface extends JFrame {
 		lblItemsDelProyecto.setHorizontalAlignment(SwingConstants.CENTER);
 		panel_items.add(lblItemsDelProyecto);
 		
-		jlist_history = new JList<State>();
-		jlist_history.setBounds(413, 44, 160, 310);
+		JScrollPane scrollPane_1 = new JScrollPane();
+		scrollPane_1.setBounds(376, 42, 197, 310);
+		panel_items.add(scrollPane_1);
+		
+		jlist_history = new JList<String>();
+		scrollPane_1.setViewportView(jlist_history);
 		jlist_history.setFont(new Font("Verdana", Font.PLAIN, 11));
 		jlist_history.setBorder(new LineBorder(new Color(0, 0, 0)));
-		panel_items.add(jlist_history);
 		
 		JLabel lblHistorial = new JLabel("Historial");
-		lblHistorial.setBounds(430, 11, 143, 20);
+		lblHistorial.setBounds(376, 11, 197, 20);
 		lblHistorial.setFont(new Font("Verdana", Font.PLAIN, 13));
 		lblHistorial.setHorizontalAlignment(SwingConstants.CENTER);
 		panel_items.add(lblHistorial);
 		
-		JButton btn_stateChange = new JButton("Cambio de estado");
-		btn_stateChange.setBounds(206, 176, 160, 30);
+		btn_stateChange = new JButton("Cambio de estado");
+		btn_stateChange.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				State s = selectedItem.getHistory().get(selectedItem.getHistory().size()-1).getState(); 
+				String[] possibilities = new String[s.getTransitions().size()];
+				int i = 0;
+				if(!(s.getTransitions().isEmpty())) {
+					for(State st : s.getTransitions()) {
+						possibilities[i] = st.getName();
+						i++;
+					}
+					String answer = (String) JOptionPane.showInputDialog(null, "Elegir nuevo estado", "Cambio de estado", JOptionPane.QUESTION_MESSAGE, null, possibilities, possibilities[0]);
+					if(answer != null) {
+						if(selectedItem.changeState(answer)) {
+							JOptionPane.showMessageDialog(null, "Se avisó al responsable sobre el cambio de estado.");
+							loadHistory(selectedItem.getHistory());
+						}
+						else {
+							JOptionPane.showMessageDialog(null, "Error al cambiar de estado.");
+						}
+					}
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "El item se encuentra en su estado final.");
+				}
+				
+
+			}
+		});
+		btn_stateChange.setEnabled(false);
+		btn_stateChange.setBounds(200, 171, 160, 30);
 		btn_stateChange.setToolTipText("Cambiar de estado un item");
 		btn_stateChange.setFont(new Font("Verdana", Font.PLAIN, 11));
 		panel_items.add(btn_stateChange);
 		
-		JButton btn_userInCharge = new JButton("Cambio de usuario");
-		btn_userInCharge.setBounds(206, 123, 160, 30);
-		btn_userInCharge.setToolTipText("Cambiar el responsable del item");
+		btn_userInCharge = new JButton("Cambio de usuario");
+		btn_userInCharge.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				String[] possibilities = new String[currentProject.getTeam().size()];
+				int i = 0;
+				for(User u : currentProject.getTeam()) {
+					possibilities[i] = u.getUsername();
+					i++;
+				}
+				String answer = (String) JOptionPane.showInputDialog(null, "Elegir nuevo responsable", "Cambio de responsable", JOptionPane.QUESTION_MESSAGE, null, possibilities, possibilities[0]);
+				if(answer != null) {
+					if(answer.equals(selectedItem.getHistory().get(selectedItem.getHistory().size() -1).getEmpInCharge().getUsername())) {
+						JOptionPane.showMessageDialog(null, "El responsable es el mismo");
+					}
+					else {
+						if (currentProject.changeEmpInCharge(answer, selectedItem) ) {
+							JOptionPane.showMessageDialog(null, "Se ha avisado al usuario dado que es el nuevo responsable de: " + selectedItem.getName());
+							loadHistory(selectedItem.getHistory());
+						}
+						else {
+							JOptionPane.showMessageDialog(null, "Error al cambiar de responsable.");
+						}
+
+					}
+				}
+			}
+		});
+		btn_userInCharge.setEnabled(false);
+		btn_userInCharge.setBounds(200, 116, 160, 30);
+		btn_userInCharge.setToolTipText("Cambiar el responsable del item seleccionado");
 		btn_userInCharge.setFont(new Font("Verdana", Font.PLAIN, 11));
 		panel_items.add(btn_userInCharge);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setBounds(571, 42, -13, 312);
+		panel_items.add(scrollPane);
 		
 		labelLogeadoComo2 = new JLabel("Logeado como:");
 		labelLogeadoComo2.setFont(new Font("Verdana", Font.PLAIN, 13));
@@ -1137,9 +1251,10 @@ public class ProgramInterface extends JFrame {
 	/*Agrega el nuevo item a un proyecto*/
 	public void addNewItem(Project p, String i) {
 		Item item = new Item(i);
-		
+		item.setItemType((ItemType) jcbx_itemType.getSelectedItem());
 		if (p.addItem(item) ) {
 			JOptionPane.showMessageDialog(null, "Item reportado exitosamente");
+			tf_item.setText("");
 		}
 		else {
 			JOptionPane.showMessageDialog(null, "Error al reportar item");
@@ -1167,7 +1282,6 @@ public class ProgramInterface extends JFrame {
 	}
 	
 	
-
 	
 	//carga el equipo en el jlist de equipo y en el combobox de empleados para el item
 	// ya que comparten los mismos datos
@@ -1248,5 +1362,24 @@ public class ProgramInterface extends JFrame {
 			dlm.addElement(i);
 		}
 		jlist_items.setModel(dlm);
+	}
+	
+	public void loadHistory(ArrayList<StateSequence> hist) {
+		int i = 1;
+		DefaultListModel<String> dlm = new DefaultListModel<String>();
+		
+		for (StateSequence s : hist) {
+			DateFormat df = new SimpleDateFormat("dd-M-yyyy hh:mm:ss");
+			String str1 = i + " (" + df.format(s.getDate()) +"):";
+			String str2 = "- Tipo: " + selectedItem.getItemType();
+			String str3 = "- Estado:  "+ s.getState();
+			String str4 = "- Responsable: " + s.getEmpInCharge().getUsername();
+			dlm.addElement(str1);
+			dlm.addElement(str2);
+			dlm.addElement(str3);
+			dlm.addElement(str4);
+			i++;
+		}
+		jlist_history.setModel(dlm);
 	}
 }

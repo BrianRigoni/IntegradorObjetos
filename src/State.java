@@ -3,23 +3,19 @@
 import java.util.ArrayList;
 
 public class State {
-	private int 				code;
 	private String 				name;
 	private ArrayList<State> 	transitions;
 	
-	public State(int code, String name) {
-		this.code = code;
+	public State(String name) {
 		this.name = name;
 		transitions = new ArrayList<State>();
 	}
 	
 	/* Setters */
-	public void setCode(int code) 								{ this.code = code; }
 	public void setName(String name) 							{ this.name = name; }
 	public void setTransitions(ArrayList<State> transitions) 	{ this.transitions = transitions; }
 	
 	/* Getters */
-	public int 				getCode() 			{ return code; }
 	public String 			getName() 			{ return name; }
 	public ArrayList<State> getTransitions() 	{ return transitions; }
 	
@@ -56,8 +52,11 @@ public class State {
 	@Override
 	public boolean equals(Object obj) {
 		State o = (State)obj;
-		return code == o.code;
+		return name == o.name;
 	}
 	
+	public String toString() {
+		return this.name;
+	}
 	
 }

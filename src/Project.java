@@ -5,6 +5,7 @@ import java.util.ArrayList;
 public class Project {
 	private String 				name;
 	private ArrayList<User> 	team;
+	private User				leader;
 	private User				defaultUserInCharge;
 	private ArrayList<Item> 	items;
 	private ArrayList<ItemType> itemTypes;
@@ -22,8 +23,21 @@ public class Project {
 	public void setTeam(ArrayList<User> team) 				{ this.team = team; }
 	public void setItems(ArrayList<Item> items) 			{ this.items = items; }
 	public void itemTypes(ArrayList<ItemType> itemTypes) 	{ this.itemTypes = itemTypes; }
-	public Project setDefaultUserInCharge(User user)		{ this.defaultUserInCharge = user; 
-															  return this;}
+	public Project setDefaultUserInCharge(User defaultUserInCharge)	{ 
+		if(team.isEmpty()) {
+			this.defaultUserInCharge = defaultUserInCharge; 
+			team.add(defaultUserInCharge);
+		}
+		return this;
+	}
+	public boolean setLeader(User leader) { 
+		if (checkTeamMemberExistence(leader)) {
+			this.leader = leader;
+			return true;
+			
+		} 
+		return false;  
+	}
 	
 	/* Getters */
 	public String 				getName() 		{ return name;  }
@@ -31,7 +45,7 @@ public class Project {
 	public ArrayList<Item> 		getItems() 		{ return items; } 
 	public ArrayList<ItemType>  getItemTypes() 	{ return itemTypes; }
 	public User getDefaultInCharge() 			{ return defaultUserInCharge; }
-	
+	public User getLeader()						{ return leader; }
 	/* ----------------- ITEMS DEL PROYECTO ----------------- */
 
 	/*Verifica la existencia de un tipo de item en el proyecto*/
@@ -66,6 +80,10 @@ public class Project {
 	/* Agrega un item en el arraylist de items */
 	public boolean addItem(Item item) {
 		if ( !(checkItemExistence(item)) ) {
+			StateSequence st = new StateSequence();
+			st.setEmpInCharge(defaultUserInCharge);
+			st.setState(item.getItemType().getStates().get(0));
+			item.addStateToHistory(st);
 			items.add(item);
 			return true;
 		}
@@ -115,6 +133,32 @@ public class Project {
 	@Override
 	public String toString() {
 		return name;
+	}
+
+	public boolean removeItem(Item item) {
+		if (checkItemExistence(item)) {
+			items.remove(item);
+			return true;
+		}
+		return false;
+	}
+	
+	public boolean changeEmpInCharge(String username, Item item) {
+		User u = null;
+		for(User us : team) {
+			if(us.getUsername().equals(username)) {
+				u = us;
+				break;
+			}
+		}
+		if(u != null) {
+			item.changeEmpInCharge(u);
+		return true;
+		}
+		else {
+			return false;
+		}
+		
 	}
 
 
